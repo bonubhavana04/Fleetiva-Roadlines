@@ -1,6 +1,8 @@
 import { useState } from "react";
 import api from "../api/axios";
 import { useNavigate, Link } from "react-router-dom";
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "../firebase";
 
 export default function Login() {
   const [phone, setPhone] = useState("");
@@ -18,10 +20,28 @@ export default function Login() {
       localStorage.setItem("role", res.data.role);
 
       if (res.data.role === "admin") navigate("/admin");
+      else if (res.data.role === "superadmin") navigate("/superadmin");
       else if (res.data.role === "driver") navigate("/driver");
       else navigate("/");
     } catch {
       alert("Invalid credentials");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const idToken = await result.user.getIdToken();
+      const res = await api.post("/auth/google", { idToken });
+      localStorage.setItem("accessToken", res.data.accessToken);
+      localStorage.setItem("role", res.data.role);
+      if (res.data.role === "admin") navigate("/admin");
+      else navigate("/");
+    } catch (err) {
+      alert("Google Login failed");
     } finally {
       setLoading(false);
     }
@@ -70,6 +90,14 @@ export default function Login() {
             {loading ? "Authenticating..." : "Login"}
           </button>
         </form>
+        <div style={{ margin: '20px 0', textAlign: 'center', color: '#6b7280' }}>OR</div>
+        <button 
+          onClick={handleGoogleLogin} 
+          disabled={loading}
+          style={{ ...styles.button, backgroundColor: '#fff', color: '#374151', border: '1px solid #d1d5db' }}
+        >
+          Sign in with Google
+        </button>
         <p style={styles.footerText}>
           <Link to="/forgot-password" style={styles.link}>Forgot Password?</Link>
         </p>

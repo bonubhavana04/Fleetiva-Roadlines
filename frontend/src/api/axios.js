@@ -5,7 +5,7 @@ import axios from "axios";
  * This MUST point to your Render backend
  */
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: import.meta.env.VITE_API_BASE_URL || "https://fleetiva-roadlines.onrender.com/api",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",

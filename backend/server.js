@@ -4,15 +4,33 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const errorHandler = require('./middleware/errorHandler');
+const { AppError } = require('./utils/appError');
 
 // OPTIONAL services (won’t crash app)
 require('./config/clients');
+
+/* ===================== FIREBASE ADMIN ===================== */
+const admin = require('firebase-admin');
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  try {
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+    console.log('✅ Firebase Admin initialized');
+  } catch (err) {
+    console.error('❌ Firebase Admin initialization failed:', err.message);
+  }
+}
 
 const app = express();
 
 /* ===================== MIDDLEWARE ===================== */
 app.use(express.json());
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors({ 
+  origin: process.env.FRONTEND_URL || "https://fleetiva-roadlines.vercel.app", 
+  credentials: true 
+}));
 app.use(cookieParser());
 
 /* ===================== HEALTH CHECK ===================== */
@@ -31,7 +49,7 @@ app.use('/api', require('./routes/logistics'));
 
 /* ===================== ERROR HANDLING ===================== */
 app.use((req, res, next) => {
-  res.status(404).json({ message: 'Route not found' });
+  next(new AppError(`Route not found - ${req.originalUrl}`, 404));
 });
 
 app.use(errorHandler);
@@ -39,6 +57,7 @@ app.use(errorHandler);
 /* ===================== DATABASE ===================== */
 const MONGO_URI = process.env.MONGO_URI;
 
+mongoose.set('strictQuery', false);
 if (MONGO_URI) {
   mongoose
     .connect(MONGO_URI)

@@ -4,10 +4,32 @@ const Load = require('../models/Load');
 const Truck = require('../models/Truck');
 const Booking = require('../models/Booking');
 const User = require('../models/User');
+const Tenant = require('../models/Tenant');
+const Log = require('../models/Log');
 const { verifyToken, authorize } = require('../middleware/auth');
 const { scopeTenant } = require('../middleware/tenant');
 const { generateBiltyPDF, generateInvoicePDF } = require('../utils/pdfGenerator');
 const asyncHandler = require('../utils/asyncHandler');
+
+router.get('/logs', verifyToken, authorize(['superadmin']), asyncHandler(async (req, res) => {
+  const logs = await Log.find().sort({ createdAt: -1 }).limit(100).populate('tenant user', 'name');
+  res.json(logs);
+}));
+
+router.delete('/logs', verifyToken, authorize(['superadmin']), asyncHandler(async (req, res) => {
+  await Log.deleteMany({});
+  res.json({ message: "All system logs cleared successfully" });
+}));
+
+router.get('/tenants', verifyToken, authorize(['superadmin']), asyncHandler(async (req, res) => {
+  const tenants = await Tenant.find({});
+  res.json(tenants);
+}));
+
+router.patch('/tenants/:id/status', verifyToken, authorize(['superadmin']), asyncHandler(async (req, res) => {
+  const tenant = await Tenant.findByIdAndUpdate(req.params.id, { isActive: req.body.isActive }, { new: true });
+  res.json(tenant);
+}));
 
 router.get('/users', verifyToken, scopeTenant, authorize(['admin']), asyncHandler(async (req, res) => {
   const users = await User.find({ tenant: req.tenantId }).select('-password -refreshToken');

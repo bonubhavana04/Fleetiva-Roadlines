@@ -67,8 +67,10 @@ export default function AdminDashboard() {
     }
   };
 
-  const downloadBilty = (id) => window.open(`http://127.0.0.1:5001/api/booking/${id}/bilty?token=${localStorage.getItem("accessToken")}`, "_blank");
-  const downloadInvoice = (id) => window.open(`http://127.0.0.1:5001/api/booking/${id}/invoice?token=${localStorage.getItem("accessToken")}`, "_blank");
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://fleetiva-roadlines.onrender.com/api";
+
+  const downloadBilty = (id) => window.open(`${API_BASE}/booking/${id}/bilty?token=${localStorage.getItem("accessToken")}`, "_blank");
+  const downloadInvoice = (id) => window.open(`${API_BASE}/booking/${id}/invoice?token=${localStorage.getItem("accessToken")}`, "_blank");
 
   const filteredLoads = loads.filter(load => {
     const matchesSearch = 
