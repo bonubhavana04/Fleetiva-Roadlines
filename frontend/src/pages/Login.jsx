@@ -1,8 +1,9 @@
 import { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { signInWithPopup } from "firebase/auth";
+import api from "../api/axios";
 import { AppContext } from "../context/AppContext";
 import Toast from "../components/Toast";
-import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../firebase";
 
 export default function Login() {
@@ -42,7 +43,7 @@ export default function Login() {
       await signInWithPopup(auth, googleProvider);
       navigate("/dashboard", { replace: true });
     } catch (err) {
-      setError(err.message || "Google login failed");
+      setError(err.response?.data?.message || err.message || "Google login failed");
     } finally {
       setLoading(false);
     }
