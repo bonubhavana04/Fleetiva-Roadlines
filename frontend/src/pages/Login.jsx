@@ -1,10 +1,9 @@
 import { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import api from "../api/axios";
 import { AppContext } from "../context/AppContext";
 import Toast from "../components/Toast";
-// import { signInWithPopup } from "firebase/auth";
-// import { auth, googleProvider } from "../firebase";
+import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "../firebase";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -12,7 +11,7 @@ export default function Login() {
 
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
-    phone: "",
+    email: "",
     password: "",
   });
 
@@ -24,14 +23,10 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await api.post("/auth/login", formData);
-
-      // save token
-      localStorage.setItem("accessToken", res.data.accessToken);
-
+      await signInWithEmailAndPassword(auth, formData.email, formData.password);
       navigate("/dashboard", { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+      setError(err.message || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -44,16 +39,10 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const idToken = await result.user.getIdToken();
-
-      const res = await api.post("/auth/google", { idToken });
-
-      localStorage.setItem("accessToken", res.data.accessToken);
-
+      await signInWithPopup(auth, googleProvider);
       navigate("/dashboard", { replace: true });
     } catch (err) {
-      setError("Google login failed");
+      setError(err.message || "Google login failed");
     } finally {
       setLoading(false);
     }
@@ -68,11 +57,13 @@ export default function Login() {
 
         <form onSubmit={handleLogin} style={styles.form}>
           <input
-            placeholder="Phone Number"
+            type="email"
+            placeholder="Email"
             required
             style={styles.input}
+            value={formData.email}
             onChange={(e) =>
-              setFormData({ ...formData, phone: e.target.value })
+              setFormData({ ...formData, email: e.target.value })
             }
           />
 
@@ -81,6 +72,7 @@ export default function Login() {
             placeholder="Password"
             required
             style={styles.input}
+            value={formData.password}
             onChange={(e) =>
               setFormData({ ...formData, password: e.target.value })
             }
@@ -90,20 +82,19 @@ export default function Login() {
             {loading ? "Signing in..." : "Login"}
           </button>
           <button
-  type="button"
-  onClick={handleGoogleLogin}
-  disabled={loading}
-  style={{
-    marginTop: 10,
-    padding: 12,
-    background: "#fff",
-    border: "1px solid #d1d5db",
-    cursor: "pointer",
-  }}
->
-  Continue with Google
-</button>
-
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={loading}
+            style={{
+              marginTop: 10,
+              padding: 12,
+              background: "#fff",
+              border: "1px solid #d1d5db",
+              cursor: "pointer",
+            }}
+          >
+            Continue with Google
+          </button>
         </form>
 
         <p style={{ marginTop: 16 }}>
