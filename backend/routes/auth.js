@@ -5,31 +5,21 @@ const User = require("../models/User");
 let admin = null;
 let db = null;
 
-/* ================= SAFE FIREBASE LOAD ================= */
 try {
   admin = require("firebase-admin");
-
-  // Firebase only usable if initialized in server.js
   if (admin.apps.length > 0) {
     db = admin.firestore();
-    console.log("✅ Firebase available in auth routes");
-  } else {
-    console.warn("⚠️ Firebase not initialized — auth routes running in safe mode");
   }
 } catch (err) {
-  console.warn("⚠️ Firebase package not found — running without Firebase");
+  // Firebase not available
 }
 
 const router = express.Router();
 
-/* ================= HELPER ================= */
 function firebaseDisabled(res) {
-  return res.status(503).json({
-    message: "Firebase authentication disabled in production",
-  });
+  return res.status(503).json({ message: "Firebase authentication disabled" });
 }
 
-/* ================= GOOGLE LOGIN ================= */
 router.post("/google", async (req, res) => {
   if (!admin || admin.apps.length === 0) return firebaseDisabled(res);
 
@@ -69,12 +59,10 @@ router.post("/google", async (req, res) => {
 
     res.json({ accessToken });
   } catch (err) {
-    console.error("❌ Google login error:", err);
     res.status(401).json({ message: "Invalid Google token" });
   }
 });
 
-/* ================= FIREBASE LOGIN ================= */
 router.post("/firebase/login", async (req, res) => {
   if (!admin || admin.apps.length === 0) return firebaseDisabled(res);
 
@@ -118,13 +106,11 @@ router.post("/firebase/login", async (req, res) => {
 
     res.json({ accessToken, user });
   } catch (err) {
-    console.error("❌ Firebase login error:", err);
     res.status(401).json({ message: "Firebase authentication failed" });
   }
 });
 
-/* ================= PROFILE UPDATE ================= */
-router.put("/profile", require("../middleware/combinedAuth").authenticate, async (req, res) => {
+router.put("/profile", require("../middleware/combinedAuth"), async (req, res) => {
   if (!admin || admin.apps.length === 0) return firebaseDisabled(res);
 
   try {
@@ -148,7 +134,6 @@ router.put("/profile", require("../middleware/combinedAuth").authenticate, async
 
     res.json({ user });
   } catch (err) {
-    console.error("❌ Profile update error:", err);
     res.status(500).json({ message: "Profile update failed" });
   }
 });
