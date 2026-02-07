@@ -1,8 +1,10 @@
 import React, { useContext, useMemo } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AppContext } from "./context/appContextStore";
+import { safeStorage } from "./utils/storage";
 
 import Navbar from "./components/Navbar";
+import LandingPage from "./pages/LandingPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -16,7 +18,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 
 const ProtectedRoute = ({ children, role }) => {
   const { user } = useContext(AppContext);
-  const currentRole = user?.role || localStorage.getItem("role");
+  const currentRole = user?.role || safeStorage.get("role");
 
   if (!user) return <Navigate to="/login" />;
   if (role && currentRole && currentRole !== role) return <Navigate to="/" />;
@@ -27,7 +29,7 @@ const ProtectedRoute = ({ children, role }) => {
 /* ================= ROOT REDIRECT ================= */
 const RootRedirect = () => {
   const { user } = useContext(AppContext);
-  const role = user?.role || localStorage.getItem("role");
+  const role = user?.role || safeStorage.get("role");
 
   if (!user) return <Navigate to="/login" />;
 
@@ -48,7 +50,7 @@ const App = () => {
       {showNavbar && <Navbar />}
 
       <Routes>
-        <Route path="/" element={<RootRedirect />} />
+        <Route path="/" element={user ? <RootRedirect /> : <LandingPage />} />
         {/* Public */}
         <Route path="/login" element={user ? <RootRedirect /> : <Login />} />
         <Route path="/register" element={user ? <RootRedirect /> : <Register />} />
